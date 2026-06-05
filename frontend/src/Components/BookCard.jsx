@@ -1,5 +1,8 @@
 import React from 'react';
+<<<<<<< HEAD
 import React from '../assets/covers';
+=======
+>>>>>>> feat/statistics-queries
 
 const BookCard = ({ title, author, image, id }) => {
   const handleBooking = () => {
@@ -21,7 +24,11 @@ const BookCard = ({ title, author, image, id }) => {
             style={{ objectFit: 'contain', padding: '16px' }}
             onError={(e) => { 
               e.target.onerror = null; 
+<<<<<<< HEAD
               e.target.src = '../assets/covers/gray.jpg'; 
+=======
+              e.target.src = '/covers/gray.jpg'; 
+>>>>>>> feat/statistics-queries
             }}
           />
         ) : (

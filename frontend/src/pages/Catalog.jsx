@@ -38,11 +38,19 @@ const Catalog = () => {
         <div className="col-12">
           <div className="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4 mb-5">
             {filteredBooks.map((book, index) => (
+<<<<<<< HEAD
               <div className="col" key={book.isbn || index}>
                 <BookCard 
                   title={book.title} 
                   author={book.author} 
                   image={`/covers/${book.isbn}.jpg`} 
+=======
+              <div className="col" key={book.bookId || index}>
+                <BookCard 
+                  title={book.title} 
+                  author={book.author} 
+                  image={`/covers/${book.bookId}.jpg`} 
+>>>>>>> feat/statistics-queries
                 />
               </div>
             ))}

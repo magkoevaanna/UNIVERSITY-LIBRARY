@@ -1,10 +1,18 @@
+<<<<<<< HEAD
 // import React from 'react';
+=======
+
+>>>>>>> feat/statistics-queries
 import BookCard from '../Components/BookCard';
 
 import React, { useState, useEffect } from 'react';
 
 const Home = () => {
+<<<<<<< HEAD
   const [books, setBooks] = useState([]);
+=======
+  const [university_library, setBooks] = useState([]);
+>>>>>>> feat/statistics-queries
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +34,7 @@ const Home = () => {
     <div className="container mt-4">
       <h2>Популярное</h2>
       <div className="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-4 mt-2">
+<<<<<<< HEAD
         {books.map((book) => (
           <div className="col" key={book.isbn}> 
             <BookCard 
@@ -33,6 +42,15 @@ const Home = () => {
               title={book.title} 
               author={book.author} 
               image={`/covers/${book.isbn}.jpg`} 
+=======
+        {university_library.map((book) => (
+          <div className="col" key={book.bookId}> 
+            <BookCard 
+              id={book.bookId}
+              title={book.title} 
+              author={book.author} 
+              image={`/covers/${book.bookId}.jpg`} 
+>>>>>>> feat/statistics-queries
             />
           </div>
         ))}
