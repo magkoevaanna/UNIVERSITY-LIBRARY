@@ -1,5 +1,6 @@
 import React from 'react';
 import Profile from '../pages/Profile'
+import ReportsPage from '../pages/ReportsPage'
 import { Link } from 'react-router-dom';
 
 
@@ -20,7 +21,7 @@ const Sidebar = ({ isDark}) => {
                 <a href="#" className="text-decoration-none" style={{color: 'inherit'}}>📊 Статистика фонда (Запрос 3)</a>
               </li>
               <li className="list-group-item bg-transparent py-3">
-                <a href="#" className="text-decoration-none fw-bold" style={{color: 'var(--purple-main)'}}>🛠️ Админ-панель</a>
+                <a href="reports" className="text-decoration-none fw-bold" style={{color: 'var(--purple-main)'}}>🛠️ Админ-панель</a>
               </li>
             </ul>
           </div>

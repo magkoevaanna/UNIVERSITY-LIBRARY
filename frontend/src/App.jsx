@@ -7,6 +7,7 @@ import './index.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Catalog from './pages/Catalog';
 import Profile from './pages/Profile';
+import ReportsPage from './pages/ReportsPage'
 
 function App() {
   const [isDark, setIsDark] = useState(true);
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<Home isDark={isDark} />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/profile" element={<Profile isDark={isDark} />} />
+            <Route path="/reports" element={<ReportsPage isDark={isDark} />} />
           </Routes>
         </main>
         
