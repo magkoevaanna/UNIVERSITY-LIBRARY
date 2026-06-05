@@ -53,82 +53,89 @@ public class BookRepository : IBookRepository
     }
 
 
-    public BookMovementReportDto GetBookMovementReport(int pointId, string? author, int? releaseYear, int? arrivalYear)
+    public BookMovementReportDto GetBookMovement(int? pointId, string? author, int? releaseYear, int? arrivalYear)
+{
+    var report = new BookMovementReportDto();
+
+    // 1. ЗАПРОС ДЛЯ ПОСТУПИВШИХ КНИГ (Тут всё верно — bi.arrival_date)
+    string queryArrived = @"
+        SELECT b.title, b.author, bi.arrival_date, dp.name AS location
+        FROM book_inventories bi
+        JOIN books b ON bi.book_id = b.book_id
+        JOIN distribution_points dp ON bi.distribution_point_id = dp.distribution_point_id
+        WHERE bi.arrival_date >= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+          AND (@PointId IS NULL OR bi.distribution_point_id = @PointId)
+          AND (@Author IS NULL OR b.author LIKE CONCAT('%', @Author, '%'))
+          AND (@ReleaseYear IS NULL OR b.publishing_year = @ReleaseYear) 
+          AND (@ArrivalYear IS NULL OR YEAR(bi.arrival_date) = @ArrivalYear);";
+
+    // 2. ЗАПРОС ДЛЯ УТЕРЯННЫХ КНИГ (Заменили rl.log_date на rl.action_date)
+    string queryLost = @"
+        SELECT b.title, b.author, rl.action_date AS lost_date, IFNULL(rl.fine_amount, 0) AS fine_amount
+        FROM reader_logs rl
+        JOIN book_inventories bi ON rl.book_inventory_id = bi.inventory_id
+        JOIN books b ON bi.book_id = b.book_id
+        WHERE rl.action_status = 'lost'
+          AND rl.action_date >= DATE_SUB(NOW(), INTERVAL 1 YEAR) -- ИСПРАВЛЕНО НА action_date
+          AND (@PointId IS NULL OR bi.distribution_point_id = @PointId)
+          AND (@Author IS NULL OR b.author LIKE CONCAT('%', @Author, '%'))
+          AND (@ReleaseYear IS NULL OR b.publishing_year = @ReleaseYear)
+          AND (@ArrivalYear IS NULL OR YEAR(bi.arrival_date) = @ArrivalYear);";
+
+    using (var connection = new MySqlConnection(ConnectionString))
     {
-        var report = new BookMovementReportDto();
+        connection.Open();
 
-        string queryArrived = @"
-            SELECT b.title, b.author, bi.arrival_date, dp.name AS location, b.release_year
-            FROM book_inventories bi
-            JOIN books b ON bi.book_id = b.book_id
-            JOIN distribution_points dp ON bi.distribution_point_id = dp.distribution_point_id
-            WHERE bi.arrival_date >= DATE_SUB('2026-06-02', INTERVAL 1 YEAR) ";
-
-        if (pointId > 0) queryArrived += " AND bi.distribution_point_id = @PointId ";
-        if (!string.IsNullOrEmpty(author)) queryArrived += " AND b.author LIKE @Author ";
-        if (releaseYear > 0) queryArrived += " AND b.release_year = @ReleaseYear ";
-        if (arrivalYear > 0) queryArrived += " AND YEAR(bi.arrival_date) = @ArrivalYear ";
-
-        string queryLost = @"
-            SELECT b.title, b.author, rl.action_date AS lost_date, rl.fine_amount
-            FROM reader_logs rl
-            JOIN book_inventories bi ON rl.book_inventory_id = bi.inventory_id
-            JOIN books b ON bi.book_id = b.book_id
-            WHERE rl.action_status = 'lost' AND rl.action_date >= DATE_SUB('2026-06-02', INTERVAL 1 YEAR) ";
-
-        if (pointId > 0) queryLost += " AND bi.distribution_point_id = @PointId ";
-        if (!string.IsNullOrEmpty(author)) queryLost += " AND b.author LIKE @Author ";
-        if (releaseYear > 0) queryLost += " AND b.release_year = @ReleaseYear ";
-        if (arrivalYear > 0) queryLost += " AND YEAR(bi.arrival_date) = @ArrivalYear ";
-
-        using (var connection = new MySqlConnection(this.ConnectionString))
+        // Читаем поступившие
+        using (var command = new MySqlCommand(queryArrived, connection))
         {
-            connection.Open();
+            command.Parameters.AddWithValue("@PointId", (object?)pointId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Author", string.IsNullOrEmpty(author) ? DBNull.Value : author);
+            command.Parameters.AddWithValue("@ReleaseYear", (object?)releaseYear ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ArrivalYear", (object?)arrivalYear ?? DBNull.Value);
 
-            using (var cmd = new MySqlCommand(queryArrived, connection))
+            using (var reader = command.ExecuteReader())
             {
-                if (pointId > 0) cmd.Parameters.AddWithValue("@PointId", pointId);
-                if (!string.IsNullOrEmpty(author)) cmd.Parameters.AddWithValue("@Author", author + "%");
-                if (releaseYear > 0) cmd.Parameters.AddWithValue("@ReleaseYear", releaseYear);
-                if (arrivalYear > 0) cmd.Parameters.AddWithValue("@ArrivalYear", arrivalYear);
-
-                using (var reader = cmd.ExecuteReader())
+                while (reader.Read())
                 {
-                    while (reader.Read())
+                    report.ArrivedBooks.Add(new ArrivedBookDto
                     {
-                        report.ArrivedBooks.Add(new ArrivedBookDto {
-                            Title = reader["title"].ToString()!,
-                            Author = reader["author"].ToString()!,
-                            ArrivalDate = Convert.ToDateTime(reader["arrival_date"]),
-                            Location = reader["location"].ToString()!
-                        });
-                    }
-                }
-            }
-
-            using (var cmd = new MySqlCommand(queryLost, connection))
-            {
-                if (pointId > 0) cmd.Parameters.AddWithValue("@PointId", pointId);
-                if (!string.IsNullOrEmpty(author)) cmd.Parameters.AddWithValue("@Author", author + "%");
-                if (releaseYear > 0) cmd.Parameters.AddWithValue("@ReleaseYear", releaseYear);
-                if (arrivalYear > 0) cmd.Parameters.AddWithValue("@ArrivalYear", arrivalYear);
-
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        report.LostBooks.Add(new LostBookDto {
-                            Title = reader["title"].ToString()!,
-                            Author = reader["author"].ToString()!,
-                            LostDate = Convert.ToDateTime(reader["lost_date"]),
-                            FineAmount = reader["fine_amount"] == DBNull.Value ? 0 : Convert.ToDecimal(reader["fine_amount"])
-                        });
-                    }
+                        Title = reader["title"].ToString()!,
+                        Author = reader["author"].ToString()!,
+                        ArrivalDate = Convert.ToDateTime(reader["arrival_date"]),
+                        Location = reader["location"].ToString()!
+                    });
                 }
             }
         }
-        return report;
+
+        // Читаем утерянные
+        using (var command = new MySqlCommand(queryLost, connection))
+        {
+            command.Parameters.AddWithValue("@PointId", (object?)pointId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Author", string.IsNullOrEmpty(author) ? DBNull.Value : author);
+            command.Parameters.AddWithValue("@ReleaseYear", (object?)releaseYear ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ArrivalYear", (object?)arrivalYear ?? DBNull.Value);
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    report.LostBooks.Add(new LostBookDto
+                    {
+                        Title = reader["title"].ToString()!,
+                        Author = reader["author"].ToString()!,
+                        LostDate = Convert.ToDateTime(reader["lost_date"]),
+                        FineAmount = Convert.ToDecimal(reader["fine_amount"])
+                    });
+                }
+            }
+        }
     }
+
+    return report;
+}
+
 
 
 

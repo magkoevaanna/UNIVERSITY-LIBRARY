@@ -34,13 +34,13 @@ public class ReaderLogsController : ControllerBase
         return _logRepository.GetInterlibraryLoans(months);
     }
 
-    [HttpGet("reader-books")]
+    [HttpGet("reader-books")]// 9
     public ReaderBooksReportDto GetReaderBooks([FromQuery] int cardNumber, [FromQuery] int months = 1)
     {
         return _logRepository.GetReaderBooksReport(cardNumber, months);
     }
 
-    [HttpGet("book-holders")]
+    [HttpGet("book-holders")]// 10
     public List<BookHoldersReportDto> GetBookHolders([FromQuery] string bookTitle)
     {
         return _logRepository.GetBookHolders(bookTitle);

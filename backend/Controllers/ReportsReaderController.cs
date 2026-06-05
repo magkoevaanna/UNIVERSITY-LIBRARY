@@ -32,7 +32,7 @@ public class ReportsReaderController : ControllerBase
 
 
 
-    [HttpGet("movement")]
+    [HttpGet("movement")] // 12
     public LibraryMovementReportDto GetMovementReport([FromQuery] int pointId = 0, [FromQuery] int months = 1)
     {
         return _memberRepository.GetLibraryMovementReport(pointId, months);
