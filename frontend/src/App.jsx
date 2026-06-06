@@ -4,7 +4,7 @@ import Footer from './Components/Footer';
 import Sidebar from './Components/Sidebar';
 import Home from './pages/Home';
 import './index.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom'; 
 import Catalog from './pages/Catalog';
 import Profile from './pages/Profile';
 import ReportsPage from './pages/ReportsPage'
@@ -19,7 +19,7 @@ function App() {
 
   return (
     <div className="App">
-      <BrowserRouter>
+      <HashRouter>
         <Header isDark={isDark} toggleTheme={toggleTheme} />
         <Sidebar isDark={isDark} toggleTheme={toggleTheme} />  
         
@@ -33,7 +33,7 @@ function App() {
         </main>
         
         <Footer />
-      </BrowserRouter>
+      </HashRouter>
     </div>
   );
 }
